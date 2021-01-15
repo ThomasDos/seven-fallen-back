@@ -10,7 +10,6 @@ const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const findOrCreate = require("mongoose-findorcreate");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const FacebookStrategy = require("passport-facebook").Strategy;
 const LocalStrategy = require("passport-local").Strategy;
 
 // Variables
@@ -42,24 +41,22 @@ passport.deserializeUser((id, done) => {
   });
 });
 //Google Strategy API
-// passport.use(
-//   new GoogleStrategy(
-//     {
-//       clientID: process.env.GOOGLE_ID,
-//       clientSecret: process.env.GOOGLE_KEY,
-//       callbackURL: "http://localhost:3000/auth/google/secrets",
-//       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-//     },
-//     function (accessToken, refreshToken, profile, cb) {
-//       console.log(profile);
-//       Users.findOrCreate({ googleId: profile.id }, function (err, user) {
-//         return cb(err, user);
-//       });
-//     }
-//   )
-// );
-
-//Facebook Strategy API
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_ID,
+      clientSecret: process.env.GOOGLE_KEY,
+      callbackURL: "http://localhost:3000/auth/google/login",
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+    },
+    function (accessToken, refreshToken, profile, cb) {
+      console.log(profile);
+      User.findOrCreate({ googleId: profile.id }, function (err, user) {
+        return cb(err, user);
+      });
+    }
+  )
+);
 
 // Local Strategy API
 passport.use(
@@ -103,51 +100,66 @@ mongoose.set("useCreateIndex", true);
 //! Requests
 
 //* User Route
+
+//* Login Route
 app
-  .route("/user")
-  .get(
+  .route("/login")
+  .get((req, res) => {
+    res.send("<h1>Login Page</h1>");
+  })
+  .post(
     passport.authenticate("local", (req, res) => {
       console.log("authentification réussie", req);
     })
-  )
-  .post((req, res) => {
-    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-      if (!err) {
-        const newUser = new User({
-          username: req.body.username,
-          email: req.body.email,
-          password: hash,
-        });
+  );
 
-        newUser.save((err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(
-              req.body.username + " was successfully added to the database"
-            );
-          }
-        });
-      }
-    });
+//* Register Route
+
+app.route("/register").post((req, res) => {
+  bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+    if (!err) {
+      const newUser = new User({
+        username: req.body.username,
+        email: req.body.email,
+        password: hash,
+      });
+
+      newUser.save((err) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(
+            req.body.username + " was successfully added to the database"
+          );
+        }
+      });
+    }
   });
+});
 
 //* Google route
-// app.get(
-//   "/auth/google",
-//   passport.authenticate("google", { scope: ["profile"] })
-// );
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile"] })
+);
 
-// app.get(
-//   "/auth/google/secrets",
-//   passport.authenticate("google", { failureRedirect: "/login" }),
-//   function (req, res) {
-//     // Successful authentication, redirect home.
-//     res.redirect("/secrets");
-//   }
-// );
+app.get(
+  "/auth/google/login",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  function (req, res) {
+    // Successful authentication, redirect home.
+    res.redirect("/test");
+  }
+);
 
 //? TEST
+app.get("/", (req, res) => {
+  res.send("<h1>Home Page</h1>");
+});
+app.get("/test", function (req, res) {
+  console.log(req.body);
+  res.send("<h1>TEST PAGE</h1>");
+});
 // bcrypt.hash("azerty", saltRound, (err, hash) => {
 //   if (!err) {
 //     const newUser = new User({
