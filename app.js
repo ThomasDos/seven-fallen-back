@@ -50,7 +50,8 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
     },
     function (accessToken, refreshToken, profile, cb) {
-      console.log(profile);
+      console.log("profile displayname", profile.displayName);
+      console.log("profile name", profile.name);
       User.findOrCreate({ googleId: profile.id }, function (err, user) {
         return cb(err, user);
       });
@@ -157,20 +158,8 @@ app.get("/", (req, res) => {
   res.send("<h1>Home Page</h1>");
 });
 app.get("/test", function (req, res) {
-  console.log(req.body);
   res.send("<h1>TEST PAGE</h1>");
 });
-// bcrypt.hash("azerty", saltRound, (err, hash) => {
-//   if (!err) {
-//     const newUser = new User({
-//       username: "Thomas",
-//       email: "test.email",
-//       password: hash,
-//     });
-//     newUser.save();
-//     console.log(newUser);
-//   }
-// });
 
 //! Server settings
 

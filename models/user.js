@@ -10,8 +10,6 @@ const userSchema = new mongoose.Schema({
   email: String,
   password: String,
   googleId: String,
-  facebookId: String,
-  secret: String,
 });
 
 userSchema.plugin(passportLocalMongoose);
